@@ -17,8 +17,8 @@ class CheckRole
     {
         if ($request->user()->role !== $role){
             return response()->json([
-                'message' => 'Acceso denegado. Sólo para '.$role], 403
-            );
+                'message' => 'Acceso denegado. Sólo para '.$role
+                ]);
         }
 
         return $next($request);

@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\AuthContoller;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Container\Attributes\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Types\Relations\Role;
+use App\Http\Middleware\CheckRole;
 
 // Rutas de autenticación
 Route::post('/login', [AuthContoller::class, 'login']);
@@ -15,11 +17,10 @@ Route::middleware('auth:sanctum')->group(function (){
     Route::get('/user', [AuthContoller::class, 'user']);
 
     // Ruta de registro protegida para  administradores.
-    Route::post('/register', [AuthContoller::class, 'register'])->middleware();
+    Route::post('/register', [AuthContoller::class, 'register'])->middleware('role:admin');
 
     // Aquí irán tus rutas CRUD para categorías, cursos, etc.
-    // Ejemplo (no las crees aún, solo para que veas la estructura)
-    // Route::apiResource('categories', CategoryController::class)->middleware('check.admin');
+    Route::apiResource('categories', CategoryController::class)->middleware('role:admin');
     // Route::apiResource('courses', CourseController::class)->middleware('check.admin');
     // ...
 });
