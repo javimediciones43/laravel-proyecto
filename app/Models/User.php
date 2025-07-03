@@ -47,4 +47,15 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // Un usuario puede tener muchos cursos.
+    public function courses()
+    {
+        return $this->hasMany(Course::class, 'created_by');
+    }
+    // Un usuario puede tener muchas inscripciones.
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class);
+    }
 }
