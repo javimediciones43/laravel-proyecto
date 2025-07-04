@@ -17,10 +17,10 @@ Route::middleware('auth:sanctum')->group(function (){
     Route::get('/user', [AuthContoller::class, 'user']);
 
     // Ruta de registro protegida para  administradores.
-    Route::post('/register', [AuthContoller::class, 'register'])->middleware('role:admin');
+    Route::post('/register', [AuthContoller::class, 'register']);
 
     // Aquí irán tus rutas CRUD para categorías, cursos, etc.
-    Route::apiResource('categories', CategoryController::class)->middleware('role:admin');
+    Route::apiResource('categories', CategoryController::class);
     // Route::apiResource('courses', CourseController::class)->middleware('check.admin');
     // ...
 });

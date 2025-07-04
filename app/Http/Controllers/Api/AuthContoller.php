@@ -24,7 +24,7 @@ class AuthContoller extends Controller
             ]);
         }
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:admin,student',
@@ -77,5 +77,18 @@ class AuthContoller extends Controller
         return response()->json([
             'message' => 'Sesión cerrada'
         ]);
+    }
+
+    /**
+     * Obtener información del usuario autenticado.
+     */
+    public function user(Request $request)
+    {
+        return response()->json([
+            'id' => $request->user()->id,
+            'name' => $request->user()->name,
+            'email' => $request->user()->email,
+            'role' => $request->user()->role,
+        ], 200);
     }
 }
