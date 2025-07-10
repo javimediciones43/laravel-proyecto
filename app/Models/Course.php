@@ -22,7 +22,7 @@ class Course extends Model
         return $this->belongsTo(Category::class);
     }
     // Un curso es creado por un usuario.
-    public function user()
+    public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
