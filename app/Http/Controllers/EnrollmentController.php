@@ -13,15 +13,15 @@ class EnrollmentController extends Controller
      */
     public function index()
     {
-        //
-    }
+        // Solo administradores o el propio usuario pueden ver sus inscripciones
+        if (Auth::user()->role === 'admin') {
+            $enrollment = Enrollment::with(['user', 'course'])->get();
+        } else {
+            // Un estudiante solo puede ver sus propias inscripciones
+            $enrollment = Auth::user()->enrollments()->with(['course'])->get();
+        }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return response()->json($enrollment, 200);
     }
 
     /**
@@ -29,7 +29,27 @@ class EnrollmentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'course_id' => 'required|exists:courses,id'
+        ]);
+
+        // Validar que no se haya inscripto antes
+        $yaInscripto = Enrollment::where('user_id', $request->user()->id)
+                                 ->where('course_id', $request->course_id)->exists();
+
+        if ($yaInscripto){
+            return response()->json([
+                'message' => 'ya estás inscripto en este curso'
+            ], 409);
+        }
+
+        $enrollment = Enrollment::create([
+            'user_id' => $request->user()->id,
+            'course_id' => $request->course_id,
+            'enrolled_at' => now()
+        ]);
+
+        return response()->json($enrollment, 201);
     }
 
     /**
