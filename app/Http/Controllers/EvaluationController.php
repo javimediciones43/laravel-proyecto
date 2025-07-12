@@ -6,6 +6,7 @@ use App\Models\Evaluation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class EvaluationController extends Controller
 {
@@ -34,7 +35,46 @@ class EvaluationController extends Controller
      */
     public function store(Request $request)
     {
+
+        // Solo administradores pueden crear evaluaciones
         if (Auth::user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized. Only administrators can create evaluations.'], 403);
+        }
+
+        try {
+            $request->validate([
+                'enrollment_id' => 'required|exists:enrollments,id', // La inscripción debe existir
+                'score' => 'required|numeric|min:0|max:100', // Puntuación entre 0 y 100
+                'feedback' => 'nullable|string',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        }
+
+        // Verificar si ya existe una evaluación para esta inscripción
+        $existingEvaluation = Evaluation::where('enrollment_id', $request->enrollment_id)->first();
+        if ($existingEvaluation) {
+            return response()->json(['message' => 'An evaluation already exists for this enrollment. Use PUT to update.'], 409); // 409 Conflict
+        }
+
+        $evaluation = Evaluation::create([
+            'enrollment_id' => $request->enrollment_id,
+            'score' => $request->score,
+            'feedback' => $request->feedback,
+            'evaluated_at' => now(), // Registra la fecha y hora actual de la evaluación
+        ]);
+
+        // Cargar las relaciones para la respuesta
+        $evaluation->load(['enrollment.user', 'enrollment.course']);
+
+        return response()->json([
+            'message' => 'Evaluation created successfully.',
+            'evaluation' => $evaluation
+        ], 201); // 201 Created
+        /* if (Auth::user()->role !== 'admin') {
             return response()->json([
                 'message' => 'No tienes permisos para crear una evaluación'
             ], 403);
@@ -44,16 +84,18 @@ class EvaluationController extends Controller
             'enrollment_id' => 'required|exists:enrollments,id',
             'score' => 'required|numeric|min:0|max:10',
             'feedback' => 'nullable|string|max:255',
-        ]);
+        ]); */
 
-        $evaluation = Evaluation::create([
+        /* $evaluation = Evaluation::create([
             'enrollment_id' => $request->enrollment_id,
             'score' => $request->score,
             'feedback' => $request->feedback,
             'evaluated_at' => now(), // Registra la fecha y hora de la evaluación.
-        ]);
+        ]); */
 
-        return response()->json($evaluation, 201);
+        /* $evaluation = Evaluation::create($request->all());
+
+        return response()->json($evaluation, 201); */
     }
 
     /**
@@ -64,15 +106,15 @@ class EvaluationController extends Controller
     {
         if (Auth::user()->role === 'admin' || $evaluation->enrollment->user_id === Auth::user()->id) {
             return response()->json($evaluation, 200);
-        }    
-    }    
+        }
+    }
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Evaluation $evaluation)
     {
         $evaluation = Evaluation::findOrFail($evaluation->id);
-        
+
         $request->validate([
             'score' => 'required|numeric|min:0|max:100',
             'feedback' => 'nullable|string|max:255',
@@ -92,7 +134,7 @@ class EvaluationController extends Controller
         if (Auth::user()->role === 'admin') {
             return response()->json([
                 'message' => 'No tienes permisos para eliminar una evaluación'
-            ], 403); 
+            ], 403);
         }
 
         $evaluation->delete();
